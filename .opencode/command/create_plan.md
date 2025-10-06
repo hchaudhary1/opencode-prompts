@@ -7,7 +7,7 @@ You are tasked with creating detailed implementation plans through an interactiv
 When this command is invoked:
 
 1. **Check if parameters were provided**:
-   - If a file path or ticket reference was provided as a parameter, skip the default message
+   - If a file path or task reference was provided as a parameter, skip the default message
    - Immediately read any provided files FULLY
    - Begin the research process
 
@@ -16,14 +16,14 @@ When this command is invoked:
 I'll help you create a detailed implementation plan. Let me start by understanding what we're building.
 
 Please provide:
-1. The task/ticket description (or reference to a ticket file)
+1. The task description (or path to a task file)
 2. Any relevant context, constraints, or specific requirements
 3. Links to related research or previous implementations
 
 I'll analyze this information and work with you to create a comprehensive plan.
 
-Tip: You can also invoke this command with a ticket file directly: `/create_plan thoughts/allison/tickets/eng_1234.md`
-For deeper analysis, try: `/create_plan think deeply about thoughts/allison/tickets/eng_1234.md`
+Tip: You can also invoke this command with a task file directly: `/create_plan thoughts/allison/tasks/task-1234.md`
+For deeper analysis, try: `/create_plan think deeply about thoughts/allison/tasks/task-1234.md`
 ```
 
 Then wait for the user's input.
@@ -33,25 +33,23 @@ Then wait for the user's input.
 ### Step 1: Context Gathering & Initial Analysis
 
 1. **Read all mentioned files immediately and FULLY**:
-   - Ticket files (e.g., `thoughts/allison/tickets/eng_1234.md`)
+   - Task files (e.g., `thoughts/allison/tasks/task-1234.md`)
    - Research documents
    - Related implementation plans
    - Any JSON/data files mentioned
    - **IMPORTANT**: Use the Read tool WITHOUT limit/offset parameters to read entire files
-   - **CRITICAL**: DO NOT spawn sub-tasks before reading these files yourself in the main context
+   - **CRITICAL**: DO NOT spawn subagents before reading these files yourself in the main context
    - **NEVER** read files partially - if a file is mentioned, read it completely
 
 2. **Spawn initial research tasks to gather context**:
    Before asking the user any questions, use specialized agents to research in parallel:
 
-   - Use the **codebase-locator** agent to find all files related to the ticket/task
-   - Use the **codebase-analyzer** agent to understand how the current implementation works
-   - If relevant, use the **thoughts-locator** agent to find any existing thoughts documents about this feature
-   - If a Linear ticket is mentioned, use the **linear-ticket-reader** agent to get full details
+   - Use the **@codebase-locator** agent to find all files related to the task
+   - Use the **@codebase-analyzer** agent to understand how the current implementation works
+   - If relevant, use the **@thoughts-locator** agent to find any existing thoughts documents about this feature
 
    These agents will:
    - Find relevant source files, configs, and tests
-   - Identify the specific directories to focus on (e.g., if WUI is mentioned, they'll focus on humanlayer-wui/)
    - Trace data flow and key functions
    - Return detailed explanations with file:line references
 
@@ -61,14 +59,14 @@ Then wait for the user's input.
    - This ensures you have complete understanding before proceeding
 
 4. **Analyze and verify understanding**:
-   - Cross-reference the ticket requirements with actual code
+   - Cross-reference the task requirements with actual code
    - Identify any discrepancies or misunderstandings
    - Note assumptions that need verification
    - Determine true scope based on codebase reality
 
 5. **Present informed understanding and focused questions**:
    ```
-   Based on the ticket and my research of the codebase, I understand we need to [accurate summary].
+   Based on the task and my research of the codebase, I understand we need to [accurate summary].
 
    I've found that:
    - [Current implementation detail with file:line reference]
@@ -95,7 +93,7 @@ After getting initial clarifications:
 
 2. **Create a research todo list** using TodoWrite to track exploration tasks
 
-3. **Spawn parallel sub-tasks for comprehensive research**:
+3. **Spawn parallel subagents for comprehensive research**:
    - Create multiple Task agents to research different aspects concurrently
    - Use the right agent for each type of research:
 
@@ -108,7 +106,7 @@ After getting initial clarifications:
    - **thoughts-locator** - To find any research, plans, or decisions about this area
    - **thoughts-analyzer** - To extract key insights from the most relevant documents
 
-   **For related tickets:**
+   **For related tasks:**
    - **linear-searcher** - To find similar issues or past implementations
 
    Each agent knows how to:
@@ -118,7 +116,7 @@ After getting initial clarifications:
    - Return specific file:line references
    - Find tests and examples
 
-3. **Wait for ALL sub-tasks to complete** before proceeding
+3. **Wait for ALL subagents to complete** before proceeding
 
 4. **Present findings and design options**:
    ```
@@ -164,17 +162,17 @@ Once aligned on approach:
 
 After structure approval:
 
-1. **Write the plan** to `thoughts/shared/plans/YYYY-MM-DD-ENG-XXXX-description.md`
-   - Format: `YYYY-MM-DD-ENG-XXXX-description.md` where:
-     - YYYY-MM-DD is today's date
-     - ENG-XXXX is the ticket number (omit if no ticket)
-     - description is a brief kebab-case description
-   - Examples:
-     - With ticket: `2025-01-08-ENG-1478-parent-child-tracking.md`
-     - Without ticket: `2025-01-08-improve-error-handling.md`
+1. **Write the plan** to `thoughts/shared/plans/YYYY-MM-DD-description.md`
+    - Format: `YYYY-MM-DD-description.md` where:
+       - YYYY-MM-DD is today's date
+       - description is a brief kebab-case description
+       - (Optional) if you have an internal task id, you may include it as `YYYY-MM-DD-task-1234-description.md`, but it's not required.
+    - Examples:
+       - With optional task id: `2025-01-08-task-1478-parent-child-tracking.md`
+       - Without task id: `2025-01-08-improve-error-handling.md`
 2. **Use this template structure**:
 
-```markdown
+````markdown
 # [Feature/Task Name] Implementation Plan
 
 ## Overview
@@ -264,15 +262,14 @@ After structure approval:
 
 ## References
 
-- Original ticket: `thoughts/allison/tickets/eng_XXXX.md`
+- Original task description: `thoughts/allison/tasks/<task-file>.md`
 - Related research: `thoughts/shared/research/[relevant].md`
 - Similar implementation: `[file:line]`
-```
+````
 
 ### Step 5: Sync and Review
 
 1. **Sync the thoughts directory**:
-   - Run `humanlayer thoughts sync` to sync the newly created plan
    - This ensures the plan is properly indexed and available
 
 2. **Present the draft plan location**:
@@ -292,7 +289,6 @@ After structure approval:
    - Adjust technical approach
    - Clarify success criteria (both automated and manual)
    - Add/remove scope items
-   - After making changes, run `humanlayer thoughts sync` again
 
 4. **Continue refining** until the user is satisfied
 
@@ -312,10 +308,10 @@ After structure approval:
 
 3. **Be Thorough**:
    - Read all context files COMPLETELY before planning
-   - Research actual code patterns using parallel sub-tasks
+   - Research actual code patterns using parallel subagents
    - Include specific file paths and line numbers
    - Write measurable success criteria with clear automated vs manual distinction
-   - automated steps should use `make` whenever possible - for example `make -C humanlayer-wui check` instead of `cd humanalyer-wui && bun run fmt`
+   - automated steps should use `make` whenever possible
 
 4. **Be Practical**:
    - Focus on incremental, testable changes
@@ -390,9 +386,9 @@ After structure approval:
 - Maintain backwards compatibility
 - Include migration strategy
 
-## Sub-task Spawning Best Practices
+## subagent Spawning Best Practices
 
-When spawning research sub-tasks:
+When spawning research subagents:
 
 1. **Spawn multiple tasks in parallel** for efficiency
 2. **Each task should be focused** on a specific area
@@ -402,15 +398,12 @@ When spawning research sub-tasks:
    - What information to extract
    - Expected output format
 4. **Be EXTREMELY specific about directories**:
-   - If the ticket mentions "WUI", specify `humanlayer-wui/` directory
-   - If it mentions "daemon", specify `hld/` directory
-   - Never use generic terms like "UI" when you mean "WUI"
    - Include the full path context in your prompts
 5. **Specify read-only tools** to use
 6. **Request specific file:line references** in responses
 7. **Wait for all tasks to complete** before synthesizing
-8. **Verify sub-task results**:
-   - If a sub-task returns unexpected results, spawn follow-up tasks
+8. **Verify subagent results**:
+   - If a subagent returns unexpected results, spawn follow-up tasks
    - Cross-check findings against the actual codebase
    - Don't accept results that seem incorrect
 
@@ -431,12 +424,12 @@ tasks = [
 User: /implementation_plan
 Assistant: I'll help you create a detailed implementation plan...
 
-User: We need to add parent-child tracking for Claude sub-tasks. See thoughts/allison/tickets/eng_1478.md
-Assistant: Let me read that ticket file completely first...
+User: We need to add parent-child tracking for Claude subagents. See thoughts/allison/tasks/task-1478.md
+Assistant: Let me read that task file completely first...
 
 [Reads file fully]
 
-Based on the ticket, I understand we need to track parent-child relationships for Claude sub-task events in the hld daemon. Before I start planning, I have some questions...
+Based on the task, I understand we need to track parent-child relationships for Claude subagent events in the daemon. Before I start planning, I have some questions...
 
 [Interactive process continues...]
 ```

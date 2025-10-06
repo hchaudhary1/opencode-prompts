@@ -53,7 +53,7 @@ When something isn't working as expected:
 - Consider if the codebase has evolved since the plan was written
 - Present the mismatch clearly and ask for guidance
 
-Use sub-tasks sparingly - mainly for targeted debugging or exploring unfamiliar territory.
+Use subagents sparingly - mainly for targeted debugging or exploring unfamiliar territory.
 
 ## Resuming Work
 
