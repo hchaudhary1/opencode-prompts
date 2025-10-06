@@ -6,28 +6,55 @@ description: Create an implementation plan from a ticket and research. Provide b
 
 You are tasked with creating detailed implementation plans through an interactive, iterative process. You should be skeptical, thorough, and work collaboratively with the user to produce high-quality technical specifications.
 
+## Initial Response
+
+When this command is invoked:
+
+1. **Check if parameters were provided**:
+   - If a file path or ticket reference was provided as a parameter, skip the default message
+   - Immediately read any provided files FULLY
+   - Begin the research process
+
+2. **If no parameters provided**, respond with:
+```
+I'll help you create a detailed implementation plan. Let me start by understanding what we're building.
+
+Please provide:
+1. The task/ticket description (or reference to a ticket file)
+2. Any relevant context, constraints, or specific requirements
+3. Links to related research or previous implementations
+
+I'll analyze this information and work with you to create a comprehensive plan.
+
+Tip: You can also invoke this command with a ticket file directly: `/create_plan thoughts/allison/tickets/eng_1234.md`
+For deeper analysis, try: `/create_plan think deeply about thoughts/allison/tickets/eng_1234.md`
+```
+
+Then wait for the user's input.
+
 ## Process Steps
 
 ### Step 1: Context Gathering & Initial Analysis
 
 1. **Read all mentioned files immediately and FULLY**:
-   - Ticket files (e.g., `thoughts/tickets/eng_1234.md`)
+   - Ticket files (e.g., `thoughts/allison/tickets/eng_1234.md`)
    - Research documents
    - Related implementation plans
    - Any JSON/data files mentioned
    - **IMPORTANT**: Use the Read tool WITHOUT limit/offset parameters to read entire files
    - **CRITICAL**: DO NOT spawn sub-tasks before reading these files yourself in the main context
+   - **NEVER** read files partially - if a file is mentioned, read it completely
 
 2. **Spawn initial research tasks to gather context**:
-   Before asking the user any questions, use specialized agents to research in parallel:
+   Before asking the user any questions, use specialized tasks/agents to research in parallel:
 
-   - Use the **codebase-locator** task to find all files related to the files given by the user
-   - Use the **codebase-analyzer** task to understand how the current implementation works
-   - If relevant, use the **thoughts-locator** task to find any existing thoughts documents about this feature
+   - Use the **codebase-locator** "task" to find all files related to the ticket/task
+   - Use the **codebase-analyzer** "task" to understand how the current implementation works
+   - If relevant, use the **thoughts-locator** "task" to find any existing thoughts documents about this feature
+   - If a Linear ticket is mentioned, use the **linear-ticket-reader** "task" to get full details
 
-   These agents will:
+   These tasks/agents will:
    - Find relevant source files, configs, and tests
-   - Identify the specific directories to focus on (e.g., if client is mentioned, they'll focus on apps/client/)
    - Trace data flow and key functions
    - Return detailed explanations with file:line references
 
@@ -59,21 +86,21 @@ You are tasked with creating detailed implementation plans through an interactiv
 
    Only ask questions that you genuinely cannot answer through code investigation.
 
-### Step 2: Think through the ticket and research to consider the steps needed to generate the plan
+### Step 2: Research & Discovery
 
 After getting initial clarifications:
 
 1. **If the user corrects any misunderstanding**:
-    - DO NOT just accept the correction
-    - Spawn new research tasks to verify the correct information
-    - Read the specific files/directories they mention
-    - Only proceed once you've verified the facts yourself
+   - DO NOT just accept the correction
+   - Spawn new research tasks to verify the correct information
+   - Read the specific files/directories they mention
+   - Only proceed once you've verified the facts yourself
 
-2. **Determine what actually needs to change** based on the research findings. The plan should be a markdown format document that addresses specific locations needing changes, written in engineering English, with small code snippets only if required for clarity.
+2. **Create a research todo list** using TodoWrite to track exploration tasks
 
-3. **Spawn sub-tasks for comprehensive research**:
+3. **Spawn parallel sub-tasks for comprehensive research**:
    - Create multiple Task agents to research different aspects concurrently
-   - Use the right agent for each type of research:
+   - Use the right task/agent for each type of research:
 
    **For deeper investigation:**
    - **codebase-locator** - To find more specific files (e.g., "find all files that handle [specific component]")
@@ -84,7 +111,10 @@ After getting initial clarifications:
    - **thoughts-locator** - To find any research, plans, or decisions about this area
    - **thoughts-analyzer** - To extract key insights from the most relevant documents
 
-   Each agent knows how to:
+   **For related tickets:**
+   - **linear-searcher** - To find similar issues or past implementations
+
+   Each task/agent knows how to:
    - Find the right files and code patterns
    - Identify conventions and patterns to follow
    - Look for integration points and dependencies
@@ -137,10 +167,17 @@ Once aligned on approach:
 
 After structure approval:
 
-1. **Write the plan** to `thoughts/plans/{descriptive_name}.md`
+1. **Write the plan** to `thoughts/shared/plans/YYYY-MM-DD-ENG-XXXX-description.md`
+   - Format: `YYYY-MM-DD-ENG-XXXX-description.md` where:
+     - YYYY-MM-DD is today's date
+     - ENG-XXXX is the ticket number (omit if no ticket)
+     - description is a brief kebab-case description
+   - Examples:
+     - With ticket: `2025-01-08-ENG-1478-parent-child-tracking.md`
+     - Without ticket: `2025-01-08-improve-error-handling.md`
 2. **Use this template structure**:
 
-```markdown
+````markdown
 # [Feature/Task Name] Implementation Plan
 
 ## Overview
@@ -186,9 +223,11 @@ After structure approval:
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] Unit tests pass: `turbo test`
-- [ ] Type checking passes: `turbo check`
-- [ ] Integration tests pass: `turbo test-integration`
+- [ ] Migration applies cleanly
+- [ ] Unit tests pass
+- [ ] Type checking passes
+- [ ] Linting passes
+- [ ] Integration/Smoke tests pass
 
 #### Manual Verification:
 - [ ] Feature works as expected when tested via UI
@@ -228,36 +267,35 @@ After structure approval:
 
 ## References
 
-- Original ticket: `thoughts/tickets/eng_XXXX.md`
-- Related research: `thoughts/research/[relevant].md`
+- Original ticket: `thoughts/allison/tickets/eng_XXXX.md`
+- Related research: `thoughts/shared/research/[relevant].md`
 - Similar implementation: `[file:line]`
-```
+````
 
-### Step 5: Review
+### Step 5: Sync and Review
+
+1. **Sync the thoughts directory**:
+   - This ensures the plan is properly indexed and available
 
 2. **Present the draft plan location**:
-    ```
-    I've created the initial implementation plan at:
-    `thoughts/plans/[filename].md`
+   ```
+   I've created the initial implementation plan at:
+   `thoughts/shared/plans/YYYY-MM-DD-ENG-XXXX-description.md`
 
-    Please review it and let me know:
-    - Are the phases properly scoped?
-    - Are the success criteria specific enough?
-    - Any technical details that need adjustment?
-    - Missing edge cases or considerations?
-    ```
+   Please review it and let me know:
+   - Are the phases properly scoped?
+   - Are the success criteria specific enough?
+   - Any technical details that need adjustment?
+   - Missing edge cases or considerations?
+   ```
 
 3. **Iterate based on feedback** - be ready to:
-    - Add missing phases
-    - Adjust technical approach
-    - Clarify success criteria (both automated and manual)
-    - Add/remove scope items
+   - Add missing phases
+   - Adjust technical approach
+   - Clarify success criteria (both automated and manual)
+   - Add/remove scope items
 
 4. **Continue refining** until the user is satisfied
-
-### Step 6: Update ticket status to 'planned' by editing the ticket file's frontmatter.
-
-Use the todowrite tool to create a structured task list for the 6 steps above, marking each as pending initially.
 
 ## Important Guidelines
 
@@ -318,9 +356,10 @@ Use the todowrite tool to create a structured task list for the 6 steps above, m
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] All unit tests pass: `turbo test`
-- [ ] No linting errors: `turbo check`
-- [ ] API endpoint returns 200: `curl localhost:3001/auth/sign-in`
+- [ ] Database migration runs successfully
+- [ ] All unit tests pass
+- [ ] No linting errors
+- [ ] API endpoint returns 200: `curl localhost:8080/api/new-endpoint`
 
 #### Manual Verification:
 - [ ] New feature appears correctly in the UI
@@ -372,6 +411,32 @@ When spawning research sub-tasks:
    - Cross-check findings against the actual codebase
    - Don't accept results that seem incorrect
 
+Example of spawning multiple tasks:
+```python
+# Spawn these tasks concurrently:
+const tasksToRun = [
+   { description: "Research database schema", subagentType: "db-research", prompt: db_research_prompt },
+   { description: "Find API patterns", subagentType: "api-research", prompt: api_research_prompt },
+   { description: "Investigate UI components", subagentType: "ui-research", prompt: ui_research_prompt },
+   { description: "Check test patterns", subagentType: "test-research", prompt: test_research_prompt },
+]
+```
+
+## Example Interaction Flow
+
+```
+User: /implementation_plan
+Assistant: I'll help you create a detailed implementation plan...
+
+User: We need to add parent-child tracking for sub-tasks. See thoughts/allison/tickets/eng_1478.md
+Assistant: Let me read that ticket file completely first...
+
+[Reads file fully]
+
+Based on the ticket, I understand we need to track parent-child relationships for sub-task events in the daemon. Before I start planning, I have some questions...
+
+[Interactive process continues...]
+```
 
 **files**
 
